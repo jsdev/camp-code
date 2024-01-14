@@ -1,8 +1,8 @@
 // This is where 2 players take turns trying to sink same opposing fleet
 // Both can win, we track hits, and sunken ships
-// We add options for battleships to be diagonal
-// We add options to not track non hits
-// TODO: We add options to just track a given player's non hits
+// We add options for battleships to be diagonal || default false
+// We add options to track own misses || default true
+// We add options to check opponent misses || default false
 
 current = 0
 squareSize = 76
@@ -10,33 +10,59 @@ buffer = {
   x: squareSize/2+2,
   y: 300
 }
-hasDiagonals = JSON.parse(localStorage.battleship_diagonals) || false
-markMisses = JSON.parse(localStorage.battleship_mark_misses) === null ?
-  true : JSON.parse(localStorage.battleship_mark_misses)
+hasDiagonals = localStorage.battleship_diagonals === undefined ?
+  false : JSON.parse(localStorage.battleship_diagonals);
+markMisses = localStorage.battleship_mark_misses === undefined ?
+  false : JSON.parse(localStorage.battleship_mark_misses);
+showOwnMisses = localStorage.battleship_show_own_misses === undefined ?
+  true : JSON.parse(localStorage.battleship_show_own_misses);
+
 
 buoy = ['@buoy','@buoy4']
 
 function switchPlayer() {
   player.avatar.hide();
+  if(!markMisses && player.buoys && player.buoys.length)
+    player.buoys.forEach(buoy => buoy.hide());
 	current = (current + 1) % 2;
   player = players[current];
   player.avatar.show();
+  if(showOwnMisses && player.buoys && player.buoys.length)
+    player.buoys.forEach(buoy => buoy.show());
 }
 
 function showSettings() {
   gameOver = true
   gear.hide()
   b = box(0,0,768,1024,'onyx','onyx')
-  toggleBand = box(600,125,100,50,'clear', 'onyx');
-  toggle = box(575,100,150,100,'clear', 'onyx');
+  toggleBand = box(600,225,100,50,'clear', 'onyx');
+  toggle = box(575,200,150,100,'clear', 'onyx');
+  diagonalSelector = circle(-1000,-1000,0,'silver','onyx')
   toggleBand2 = box(600,425,100,50,'clear', 'onyx');
   toggle2 = box(575,400,150,100,'clear', 'onyx');
-  text("ALLOW DIAGONALS",525,170, 52, 'pearl', RIGHT)
-  diagonalSelector = circle(-1000,-1000,0,'silver','onyx')
   markMissSelector = circle(-1000,-1000,0,'silver','onyx')
+  toggleBand3 = box(600,625,100,50,'clear', 'onyx');
+  toggle3 = box(575,600,150,100,'clear', 'onyx');
+  showOwnMissSelector = circle(-1000,-1000,0,'silver','onyx')
+  text("ALLOW DIAGONALS",525,270, 52, 'pearl', RIGHT)
+  text("MARK MISSES",525,470, 52, 'pearl', RIGHT)
+  text("MARK OWN MISSES",525,670, 52, 'pearl', RIGHT)
   arrow = stamp('arrow16',768 - 45, 1024-45,80)
   dispose = [b, arrow]
-  text("MARK MISSES",525,470, 52, 'pearl', RIGHT)
+  
+  const selectOwnMarker = marker => {
+    if (!marker) {
+      showOwnMissSelector.change('silver', 'onyx').size(50).move(625,650)
+      toggleBand3.change('silver', 'onyx')
+	    showOwnMisses = false
+  	  localStorage.battleship_show_own_misses = false
+      return
+    }
+    showOwnMissSelector.change('green', 'onyx').size(50).move(675,650)
+    toggleBand3.change('green', 'onyx')
+    showOwnMisses = true
+    localStorage.battleship_show_own_misses = true
+  }
 
   const selectMissMarker = marker => {
     if (!marker) {
@@ -54,22 +80,24 @@ function showSettings() {
   
   const selectDiagonals = diagonal => {
     if (!diagonal) {
-      diagonalSelector.change('silver', 'onyx').size(50).move(625,150)
+      diagonalSelector.change('silver', 'onyx').size(50).move(625,250)
       toggleBand.change('silver', 'onyx')
 	    hasDiagonals = false
   	  localStorage.battleship_diagonals = false
       return
     }
-    diagonalSelector.change('green', 'onyx').size(50).move(675,150)
+    diagonalSelector.change('green', 'onyx').size(50).move(675,250)
     toggleBand.change('green', 'onyx')
     hasDiagonals = true
     localStorage.battleship_diagonals = true
   }
   toggle.tap = () => selectDiagonals(!hasDiagonals)
   toggle2.tap = () => selectMissMarker(!markMisses)
+  toggle3.tap = () => selectOwnMarker(!showOwnMisses)
 	arrow.tap = () => delay(startGame, 10)
   selectDiagonals(hasDiagonals)
   selectMissMarker(markMisses)
+  selectOwnMarker(showOwnMisses)
 }
 
 function generateBoardWithDiagonals() {
@@ -217,17 +245,23 @@ function shipTotals() {
   }
   players[0].ships = 0;
   players[0].strikes = 0;
+  players[0].buoys = [];
   players[1].ships = 0;
   players[1].strikes = 0;
+  players[1].buoys = [];
   delay(() => tap = startGame, 100)  
+}
+
+function compareXY(obj1, obj2) {
+  return obj1.x === obj2.x && obj1.y === obj2.y;
 }
 
 function missleStrike() {
   gear.hide()
-  if (this.tapped || gameOver) return
-
   let col = getCol(this.x);
   let row = getRow(this.y);
+  console.log(player.buoys, this);
+  if ( gameOver || (this.tapped && player.buoys.some(buoy => compareXY(buoy, this))) ) return
 
   let target = parseInt(board[row][col]);
   board[row][col] = 0;
@@ -252,14 +286,15 @@ function missleStrike() {
         gameOver = true
 	      delay(hitTotals,2001)
       }
-//      console.log(board)
     }
   } else {
     sound('splash');
     stamp('splash', buffer.x + col * squareSize, buffer.y + row * squareSize, 100);
-    if (markMisses) {
+    if (markMisses || showOwnMisses) {
       this.tapped = true
       let buoy = stamp('@buoy2', buffer.x + col * squareSize, buffer.y + row * squareSize, squareSize/4);
+      if (player.buoys && Array.isArray(player.buoys))
+         player.buoys.push(buoy);
       delay(()=> buoy.size(squareSize/2), 100)
       delay(()=> buoy.size(squareSize),300)
     }
@@ -284,14 +319,16 @@ function startGame(){
     size: 200,
     ships: 0,
     strikes: 0,
+    buoys: [],
     avatar: stamp('@aura', 105, 125,200)
   },{
     pic: '@elias',
     x: 664,
     y: 125,
+    size: 200,
     ships: 0,
     strikes: 0,
-    size: 200,
+    buoys: [],
     avatar: stamp('@elias', 664, 125,200)
   }]
   players[0].avatar.hide()
@@ -307,4 +344,3 @@ function startGame(){
   tap = null
 }
 startGame()
-
