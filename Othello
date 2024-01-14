@@ -1,0 +1,452 @@
+// Othello aka Reversi
+// Allow users to pick colors
+// Easter Egg to unlock white or black have players pick same colors
+
+legalMove = false;
+winner = 2;
+spaces = 60;
+passing = 0;
+boardLength = 8;
+size = 77;
+pieceSize = 30;
+fontSize = 40
+gameOver = false;
+selcted = null
+ghosts = [
+  { color: "rgb(128,203,171)", stamp: "ghost10", score: 0 },
+  { color: "rgb(245,154,185)", stamp: "ghost11", score: 0 }, 
+  { color: "rgb(109,207,247)", stamp: "ghost12", score: 0 },
+  { color: "rgb(156,134,190)", stamp: "ghost13", score: 0 }, 
+  { color: "rgb(247,151,122)", stamp: "ghost14", score: 0 },
+  { color: "rgb(247,232,149)", stamp: "ghost15", score: 0 }
+];
+passButton = null;
+
+defaults = localStorage.ghosts?.split(',') || [3,2]
+
+players = [];
+
+function selectPlayers() {
+  team = false;
+  gameOver = false
+  reset()
+  c1 = circle(2000,2000,75,'white', 'black')
+  c2 = circle(2000,2000,75,'black')
+    text("DELUXE", 375, 60, 50, "Nova Cut", CENTER)
+
+  text("OTHELLO", 375, 200, 150, "Nova Cut", CENTER)
+  text("Try not to flip out!", 375, 290, 48, "Nova Cut", CENTER);
+  x = 105;
+  y = 440;
+  imageWidth = 120;
+
+  // PLAYER 1
+  for (i = 0; i < ghosts.length; i++) {
+    stamp(ghosts[i].stamp, x, y, imageWidth);   
+    box(30, -70 + y, 150, 150, "clear").tap = update(0,i)
+		i++
+    stamp(ghosts[i].stamp, x + 150, y, imageWidth);   
+    box(180, -70 + y, 150, 150, "clear").tap = update(0,i)
+
+    y += 150;
+  }
+  x = 500
+  y = 440
+  // PLAYER 2
+  for (i = 0; i < ghosts.length; i++) {
+    stamp(ghosts[i].stamp, x, y, imageWidth);   
+    box(430, -70 + y, 150, 150, "clear").tap = update(1,i)
+		i++
+    stamp(ghosts[i].stamp, x + 150, y, imageWidth);   
+    box(580, -70 + y, 150, 150, "clear").tap = update(1,i)
+
+    y += 150;
+  }
+  text("GO", 375, 970, 120, "Nova Cut", CENTER)
+  box(230, 850, 300, 150, "clear", 'gray').tap = startGame(2)
+  update(0, defaults[0])()
+  update(1, defaults[1])()
+}
+
+selectPlayers();
+
+function update(selection, ghost) {
+  circlces =[c1,c2]
+  coords = [
+    {x: 110, y: 440},
+    {x: 260, y: 440},
+    {x: 110, y: 590},
+    {x: 260, y: 590},
+    {x: 110, y: 740},
+    {x: 260, y: 740},
+  ]
+  return () => {
+    let {x, y} = coords[ghost];
+
+    circlces[selection].move(x + selection*395, y)
+    defaults[selection] = ghost;
+    localStorage.ghosts = defaults;
+    players[selection] = {...ghosts[ghost]};
+  }
+}
+
+function pass() {
+  passing = passing+1;
+  if (passing < 5) switchPlayer()
+  else winningDance()
+}
+
+function startGame(num) {
+  return () => {
+    let colors = ['pearl','onyx'];
+		board = [];
+    tapped = false;
+    numberOfPlayers = num;
+    reset();
+    if (players[0].color === players[1].color) {
+      let r = Math.floor(Math.random() * 2);
+      players[r].color = colors[r];
+    }
+    current = 0;
+    player = players[current];
+    currentPlayer = box(0, 0, 1000, size, player.color).show();
+    passing = 0;
+    winner = 2;
+		let i = 0
+    for (i = 0; i < boardLength; i++) {
+      board[i] = [];
+      for (var j = 0; j < boardLength; j++) {
+        board[i][j] = 'x';
+        box(size + i * size, size+j * size, size, size, 'clear',
+            'gray'
+        ).tap = userLayPiece;
+      }
+    }
+    scores = {}
+    stamps = {}
+    for (i=0;i<numberOfPlayers;i++) {
+      circle(size*2 + size*(i*6), 850,size, colors[i], 'black')
+      stamps[players[i].color] = stamp(players[i].stamp, size*2 + size*(i*6), 850, size*1.5)
+      box(size*3.75 + size*(i*1.25), 798, 80,60, colors[i], 'gray')
+
+      scores[players[i].color] = text('02', size*3.75 + size*(i*1.25), 850, size*.8, 'Nova Cut', colors[(i+1)%2], LEFT)
+    }
+
+    passButton = box(299,910, 160,100, 'rgb(245,245,245)', 'black')
+    passButton.tap = pass
+    text('PASS', 378,975, 40, CENTER)
+
+    board[3][3] = 0;
+    circle(3*size + size*1.5, 3*size + size*1.5, pieceSize, players[0].color, 'black')
+    sound('block', 10)
+    delay(() => {
+      board[4][3] = 1;
+      circle(3*size + size*1.5, 4*size + size*1.5, pieceSize, players[1].color, 'black')
+      sound('block', 10)
+    },300)
+    delay(() =>{
+			board[4][4] = 0;
+      circle(4*size + size*1.5, 4*size + size*1.5, pieceSize, players[0].color, 'black')
+      sound('block', 10)
+    },600)
+    delay(() =>{
+			board[3][4] = 1;
+      circle(4*size + size*1.5, 3*size + size*1.5, pieceSize, players[1].color, 'black')
+      sound('block', 10)
+    },900)
+    
+  }
+}
+
+function getOpponent(n) {
+  return (n + 1) % 2
+}
+
+function getScoreUpdates(board) {
+	spaces = 0;
+  let white = 0, black = 0;
+  for(let i = 0; i < board.length; i++) {
+    for(let j = 0; j < board[i].length; j++) {
+      if(board[i][j] === 0) white++;
+      else if(board[i][j] === 1) black++;
+      else spaces++;
+    }
+  }
+  if (white > black ) { winner = 0 }
+  else if (white < black ) { winner = 1 }
+  else winner = 2
+  scores[players[0].color].change(`0${white}`.slice(-2))
+  scores[players[1].color].change(`0${black}`.slice(-2))
+}
+
+
+function switchPlayer() {
+  current = (current + 1) % numberOfPlayers
+  player = players[current]
+  currentPlayer.change(player.color);
+  tapped = false
+}
+
+function outOfIndex(x, y) {
+  return x < 0 || y < 0 || x >= boardLength || y >= boardLength
+}
+
+function userLayPiece() {
+  if (!layPiece(this.x, this.y)) {
+    sound('slap')
+  }
+}
+
+function layPiece(x, y) {
+  if (tapped) return
+  o = {
+    x: (x -size)/size,
+    y: (y -size)/size
+  }
+  if (
+    outOfIndex(o.x, o.y) ||
+    board[o.y][o.x]!== 'x'
+  ) return false
+
+	if (
+    checkMove(o.y, o.x) &&
+   	!gameOver
+  ) { 
+    tapped = true
+    return true
+  }
+  return false
+}
+
+
+function changePiecesOnBoard(pieces) {
+  pieces.forEach((piece, index) => {
+    let {x,y} = piece
+
+    circle(x*size + size*1.5, y*size + size*1.5, pieceSize, player.color, 'black')
+    board[y][x] = current
+
+  })
+}
+
+function evaluateGrouping(arr) {
+  let pieces = arr.map(o => o.piece).join('');
+  end = pieces.indexOf(current, 1)
+  if (end === -1) {
+    return
+  }
+  let subset = arr.slice(0,end+1)
+  if (subset.length >= 1 && subset.findIndex(o => o.piece === 'x') === -1) {
+    sound('game')
+    legalMove = true
+    passing = 0
+    console.log({status})
+    changePiecesOnBoard(subset)
+  } 
+}
+function tieDance() {
+  teammate = stamp(players[0].stamp,540,500,300)
+  dancer = stamp(players[1].stamp,220,500,300)
+
+  sound('dance')
+
+  dancer.dance()
+  teammate.dance()
+  delay(() => {
+    dancer.dance()
+    teammate.dance()
+  }, 1000)
+  delay(() => {
+    dancer.dance()
+    teammate.dance()
+  }, 2000)
+  delay(() => {
+    dancer.dance()
+    teammate.dance()
+  }, 3000)
+  delay(selectPlayers, 4000)
+}
+
+function winningDance() {
+  passButton.hide()
+  if (winner === 2) {
+    tieDance()
+    return
+  }
+  sound('dance')
+  dancer = stamp(players[winner].stamp,400)
+  dancer.dance()
+  delay(() => dancer.dance(), 1000)
+  delay(() => dancer.dance(), 2000)
+  delay(() => dancer.dance(), 3000)
+  delay(selectPlayers, 4000)
+}
+
+function isOpponentNext (arr, opponent) {
+  return arr.length > 2 && arr[1]==opponent
+}
+
+function checkMove(row, col) {
+  const VERT_ROW = board.map(row => row[col]);
+  const VERT_UP = VERT_ROW.slice(0, row+1).reverse();
+  const VERT_DOWN = VERT_ROW.slice(row,8);
+  const HORIZ_LEFT = board[row].slice(0, col+1).reverse();
+  const HORIZ_RIGHT =board[row].slice(col,8);
+  const opponent = getOpponent(current)
+
+  VERT_UP[0] = current
+  VERT_DOWN[0] = current
+  HORIZ_LEFT[0] = current
+  HORIZ_RIGHT[0] = current
+  
+  console.log({
+    VERT_UP,
+    VERT_DOWN,
+    HORIZ_LEFT,
+    HORIZ_RIGHT
+  });
+  // VERTICAL UP
+  if (isOpponentNext(VERT_UP, opponent)) {
+    arr = VERT_UP.map((piece,i) => ({
+      piece,
+      y: row-i,
+      x: col
+    }))
+
+    status = 'VERT UP'
+    console.log('VERT UP')
+    evaluateGrouping(arr)
+  }
+  // VERTICAL DOWN
+  if (isOpponentNext(VERT_DOWN, opponent)) {
+    arr = VERT_DOWN.map((piece,i) => ({
+      piece,
+      y: row+i,
+      x: col
+    }))
+    
+    status = 'VERTICAL DOWN'
+    console.log('VERT DOWN')
+    evaluateGrouping(arr)
+  }
+  // HORIZONTAL RIGHT
+  if (isOpponentNext(HORIZ_RIGHT, opponent)) {
+    arr = HORIZ_RIGHT.map((piece,i) => ({
+          piece,
+          y: row,
+          x: col+i
+    }))
+    status = 'HORIZONTAL RIGHT'
+    console.log('HORIZ RIGHT')
+    evaluateGrouping(arr)
+  }
+  // HORIZONTAL LEFT
+  if (isOpponentNext(HORIZ_LEFT, opponent)) {
+    arr = HORIZ_LEFT.map((piece,i) => ({
+      piece,
+      y: row,
+      x: col-i
+    }))
+    status = 'HORIZONTAL LEFT'
+    console.log('HORIZ LEFT')
+    evaluateGrouping(arr)
+  }
+  
+  arr = [{
+    piece: current,
+    y: row,
+    x: col
+  }]
+  // DIAGONAL DOWN RIGHT
+  for(let i = 1; i <= 8; i++) {
+    if(row+i < boardLength && col+i < boardLength) {
+      arr.push({
+        piece: board[row+i][col+i],
+        y: row+i,
+        x: col+i
+      });
+    }
+  }
+  if (arr.length > 2 && arr[1].piece === opponent) {
+    status = 'DIAGONAL DOWN RIGHT'
+    console.log('DIAGONAL DOWN RIGHT')
+    evaluateGrouping(arr)
+  }
+  arr = [{
+    piece: current,
+    y: row,
+    x: col
+  }]
+  // DIAGONAL UP LEFT
+  for(let i = 1; i <= 8; i++) {
+    if(row-i >= 0 && col-i >= 0) {
+      arr.push({
+        piece: board[row-i][col-i],
+        y: row-i,
+        x: col-i
+    	});
+    }
+  }
+  if (arr.length > 2 && arr[1].piece === opponent) {
+    status = 'DIAGONAL UP LEFT'
+    console.log('DIAGONAL UP LEFT')
+    evaluateGrouping(arr)
+  }
+  arr = [{
+    piece: current,
+    y: row,
+    x: col
+  }]
+	// DIAGONAL UP RIGHT
+  for(let i = 1; i <= 8; i++) {
+    if(row-i >= 0 && col+i < boardLength) {
+      arr.push({
+        piece: board[row-i][col+i],
+        y: row-i,
+        x: col+i
+    	});
+    }
+  }
+  if (arr.length > 2 && arr[1].piece === opponent) {
+    status = 'DIAGONAL UP RIGHT'
+    console.log('DIAGONAL UP RIGHT')
+    evaluateGrouping(arr)
+  }
+  arr = [{
+    piece: current,
+    y: row,
+    x: col
+  }]
+	// DIAGONAL DOWN LEFT
+  for(let i = 1; i <= 8; i++) {
+    if(col-i >= 0 && row+i < boardLength) {
+      arr.push({
+        piece: board[row+i][col-i],
+        y: row+i,
+        x: col-i
+    	});
+    }
+  }
+  if (arr.length > 2 && arr[1].piece === opponent) {
+    status = 'DIAGONAL DOWN LEFT'
+    console.log('DIAGONAL DOWN LEFT')
+    evaluateGrouping(arr)
+  }
+  if (legalMove) {
+    circle(
+      col*size+size*1.5,
+      row*size+size*1.5,
+      pieceSize, player.color, 'black')
+    sound('block', 10)
+    console.log(board.map(r=>r.join('')).join('\n'))
+    board[row][col] = current
+    console.log(board.map(r=>r.join('')).join('\n'))
+    legalMove = false;
+    // check if gameover
+    // allow player to pass if no moves
+    getScoreUpdates(board)
+    if (spaces) delay(switchPlayer,10)
+    else winningDance()
+    return true
+  }
+}
