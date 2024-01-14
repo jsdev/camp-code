@@ -1,0 +1,191 @@
+// Hi-Q goal is to finish with 1
+// Highest score for finishing 1 in starting hole
+// One of my favorite Solitare gams
+// TODO allow people to change starting hole
+// TODO add colored piece to finish in hole, perhaps suggeting the color placement
+
+pieces = []
+bufferX = 85
+bufferY = 200
+pegSize = 100
+holeSize = 60
+tapped = false
+peg = '@PINKGHOST'
+pegMoveLeft = '@PINKGHOSTLEFT2'
+pegMoveRight = '@PINKGHOSTRIGHT2'// 'ghost10'
+hole = 'black'
+
+let grid = [
+  ['x','x',1,1,1,'x','x'],
+  ['x','x',1,1,1,'x','x'],
+	  	[1,1,1,1,1,1,1],
+    	[1,1,1,0,1,1,1],
+    	[1,1,1,1,1,1,1],
+  ['x','x',1,1,1,'x','x'],
+  ['x','x',1,1,1,'x','x']
+];
+
+function isValidMove(piece, dest) {
+  let pegJumped;
+  if (piece.row === dest.row && piece.col === dest.col) return false
+  if (piece.col === dest.col) {
+    if (piece.row - dest.row === 2) {
+      pegJumped = pieces[dest.row + 1][dest.col];
+      console.log({pegJumped, pieces})
+      if (pegJumped?.value === 1) {
+        pegJumped.size(holeSize).change(hole).value = 0
+     		return true
+      }
+      return false
+    }
+    if (piece.row - dest.row === -2) {
+      pegJumped = pieces[dest.row - 1][dest.col];
+      console.log({pegJumped, pieces})
+      if (pegJumped?.value === 1) {
+        pegJumped.size(holeSize).change(hole).value = 0
+     		return true
+      }
+      return false
+    }
+    return false;
+  }
+  if (piece.row === dest.row) {
+    if (piece.col - dest.col === 2) {
+      pegJumped = pieces[dest.row][dest.col + 1];
+      console.log({pegJumped, pieces})
+      if (pegJumped?.value === 1) {
+        pegJumped.size(holeSize).change(hole).value = 0
+     		return true
+      }
+      return false
+    }
+    if (piece.col - dest.col === -2) {
+      pegJumped = pieces[dest.row][dest.col - 1];
+      console.log({pegJumped, pieces})
+      if (pegJumped?.value === 1) {
+        pegJumped.size(holeSize).change(hole).value = 0
+     		return true
+      }
+      return false
+    }
+  }
+  return false
+}
+
+function makeMove(piece, dest){
+  sound('flap')
+  const x = piece.x;
+  const y = piece.y;
+  let mover = piece.x > dest.x ? pegMoveLeft : pegMoveRight;
+  let s = stamp(mover, x, y, pegSize)
+  piece.change(hole).size(holeSize).move(DOWN,10)
+  piece.value = 0;
+  tapped = false;
+  s.move(dest.x, dest.y-10, 800)
+  
+
+	delay(()=> {
+    dest.change(peg).size(pegSize);
+    dest.value = 1;
+    s.hide()
+    
+    if (++count === 31) {
+      sound('dance');
+      dest.dance();
+      delay(() => {
+        dest.dance()
+        pieces[dest.row].forEach(piece => {
+          if (piece !== null) {
+            piece.change(peg).size(pegSize)
+            piece.dance()
+          }
+        })
+      }, 1000);
+      delay(()=> {
+        pieces.forEach(row => {
+          console.log(row);
+          if (Array.isArray(row))
+            row.forEach(hole => {
+              if (hole !== null) {
+              	hole.change(peg).size(pegSize);
+              	hole.dance();
+              }
+            });
+        });
+      }, 2000);
+      delay(() => {
+        dest.dance()
+      }, 3000);
+      delay(startGame, 4000);
+    }
+  },800)
+}
+
+
+function resetPegBoard(grid){
+  let s = null;
+  for (let y = 0; y < grid?.length; y++) {
+    pieces[y] = [];
+    for (let x = 0; x < grid[x]?.length; x++) {
+      if (grid[y][x] === 'x') {
+        s = null
+      } else {
+        stamp(hole, x *pegSize + bufferX, y*pegSize + bufferY, holeSize);
+
+        s = stamp(grid[y][x] ? peg : hole, x *pegSize + bufferX, y*pegSize + bufferY, grid[y][x] ? pegSize : holeSize);
+        s.value = grid[y][x];
+        s.row = y;
+        s.col = x;
+        s.tap = function() {
+          if (count === 2) {
+            resetGame = stamp('ghost9',700,75,100)
+            resetGame.tap = rewind
+          }
+          let pegMove = this.x < 350 ? pegMoveRight : pegMoveLeft;
+
+          if (!tapped) {
+            if (this.name === hole) return
+            tapped = this;
+            this.change(pegMove);
+            this.move(UP, 10)
+            return 
+          } else {
+            if (this.name === peg && this.value === 1) {
+              tapped.move(DOWN, 10)
+              tapped.change(peg).size(pegSize)
+
+              tapped = this;
+              tapped.change(pegMove)
+              tapped.move(UP, 10)
+              return
+            }
+            
+            if (this.name === hole && this.value === 0) {
+              if (isValidMove(tapped, this)) {
+                makeMove(tapped, this)
+              }
+            }
+
+          }
+        }
+      }
+      pieces[y].push(s)
+    }
+  }
+}
+
+function rewind() {
+ 	sound('rewind')
+  delay(startGame, 1500)
+}
+
+function startGame() {
+  reset()
+  count = 0
+  fill('wallpaper')
+  pieces = []
+  gameOver = true
+  resetPegBoard(grid)
+}
+
+startGame()
