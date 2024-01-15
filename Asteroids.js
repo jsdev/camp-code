@@ -4,12 +4,17 @@
 // TODO have a winning sequence
 // TODO Add damage to ship, so can survive up to 3 hits
 // add powerups to shoot at
+// powerups can change color of laser changes, size and possible bi and tri-directional
 
 level = 1
+spaceship = 'spaceship4'
+BIG_ONES = ['@asteroidbig','@asteroidbig2', '@asteroid3', '@asteroid4', '@asteroid5']
+SMALL_ONES = ['@asteroidsmall', '@asteroid3', '@asteroid4', '@asteroid5']
+
 function startGame() {
   reset()
   fill('stars')
-  shooter = stamp('spaceship4',100)
+  shooter = stamp(spaceship,100)
   lasers = []
   
   mediumAsteroids = []
@@ -41,7 +46,7 @@ function spawnBigAsteroid() {
   let y1 = random(0,350)
   let y2 = random(650,1000)
   let y = random([y1,y2])
-  asteroid = stamp('@asteroidbig',x, y, 200);
+  asteroid = stamp(random(BIG_ONES),x, y, 200);
   asteroid.speed = 6
   asteroid.rotate(random(0,290));
   return asteroid
@@ -56,7 +61,7 @@ function spawnSmallAsteroid(x,y) {
   let rand2 = random(650,1000)
   let newY = random([rand1,rand2])
 	
-  asteroid = stamp('@asteroidbig',x1, y1, 50);
+  asteroid = stamp(random(SMALL_ONES),x1, y1, 50);
 	asteroid.speed = 9
   asteroid.rotate(0,270).aim(newX,newY)
   return asteroid
@@ -66,32 +71,28 @@ function spawnMediumAsteroid(x,y) {
   let x1 = x + random(-5,5)
   let y1 = x + random(-5,5)
 
-  asteroid = stamp('@asteroidbig',x, y, 100);
+  asteroid = stamp(random(BIG_ONES),x, y, 100);
   asteroid.speed = 8
   asteroid.rotate(165,190)
   return asteroid
 }
 
-function bigHit(asteroid) {
+function showExplosion(asteroid){
   asteroid.explode()
   asteroid.hit = true
-  mediumAsteroids.push(spawnMediumAsteroid(asteroid.x,asteroid.y))
-  mediumAsteroids.push(spawnMediumAsteroid(asteroid.x,asteroid.y))
   sound('hits')
+}
+
+function bigHit(asteroid) {
+	showExplosion(asteroid)
+  mediumAsteroids.push(spawnMediumAsteroid(asteroid.x,asteroid.y))
+  mediumAsteroids.push(spawnMediumAsteroid(asteroid.x,asteroid.y))
 }
 
 function mediumHit(asteroid) {
-  asteroid.explode()
-  asteroid.hit = true
+	showExplosion(asteroid)
   smallAsteroids.push(spawnSmallAsteroid(asteroid.x,asteroid.y))
   smallAsteroids.push(spawnSmallAsteroid(asteroid.x,asteroid.y))
-  sound('hits')
-}
-
-function smallHit(asteroid) {
-  asteroid.explode()
-  asteroid.hit = true
-  sound('hits')
 }
 
 function shoot() {
@@ -137,7 +138,7 @@ function loop() {
             mediumHit(asteroid)
             return true 
           }
-          smallHit(asteroid)
+          showExplosion(asteroid)
         	return true 
         }
         return false
@@ -157,5 +158,6 @@ function loop() {
     asteroid.wrap()
   })
 }
+
 
 
