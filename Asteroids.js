@@ -5,39 +5,69 @@
 // TODO Add damage to ship, so can survive up to 3 hits
 // add powerups to shoot at
 // powerups can change color of laser changes, size and possible bi and tri-directional
+// NEED TO ADD data security
 
-level = 1
-spaceship = 'spaceship4'
-BIG_ONES = ['@asteroidbig','@asteroidbig2', '@asteroid3', '@asteroid4', '@asteroid5']
-SMALL_ONES = ['@asteroidsmall', '@asteroid3', '@asteroid4', '@asteroid5']
+const spaceship = 'spaceship4'
+const BIG_ONES = ['@asteroidbig','@asteroidbig2', '@asteroid3', '@asteroid4', '@asteroid5']
+const SMALL_ONES = ['@asteroidsmall', '@asteroid3', '@asteroid4', '@asteroid5']
+let applause = false;
+let level = 1;
+let mirror = null;
+
+const levels = {
+  1: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
+  2: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
+	3: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
+	4: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
+}
 
 function startGame() {
   reset()
   fill('stars')
+  
   shooter = stamp(spaceship,100)
   lasers = []
-  
+  triLaser = true
+
+  bigAsteroids = levels[level]()
   mediumAsteroids = []
   smallAsteroids = []
   shooterHit = false
   tap = shoot
-  if (level===1){
-    bigAsteroids = [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
-		return
-  }
-  if (level===2){
-    bigAsteroids = [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
-		return
-  }
-  if (level===3){
-    bigAsteroids = [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
-		return
-  }
-  if (level===4){
-    bigAsteroids = [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
-		return
-  }
+  applause = false
 }
+
+function rotateGuns(spaceship, leftWingGun, rightWingGun) {
+  var {x, y, rotation } = spaceship
+  // set the distance of the guns from the center of the spaceship
+  var distance = 30;
+  // set the initial position of the left wing gun
+  var leftX = x - distance;
+  var leftY = y;
+  // set the initial position of the right wing gun
+  var rightX = x + distance;
+  var rightY = y;
+  // use the rotatePoint function to get the new position of the guns after rotation
+  var left = rotatePoint(x, y, leftX, leftY, rotation);
+  var right = rotatePoint(x, y, rightX, rightY, rotation);
+  // set the x, y position of the left wing gun
+  leftWingGun.x = left.x;
+  leftWingGun.y = left.y;
+  // set the x, y position of the right wing gun
+  rightWingGun.x = right.x;
+  rightWingGun.y = right.y;
+}
+
+function rotatePoint(cx, cy, x, y, angle) {
+  let radians =  angle * (Math.PI / 180);
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: Math.round(cos * (x-cx) - sin * (y-cy) + cx),
+    y: Math.round(sin * (x-cx) + cos * (y-cy) + cy)
+  };
+} 
+
 
 startGame()
 
@@ -95,19 +125,58 @@ function mediumHit(asteroid) {
   smallAsteroids.push(spawnSmallAsteroid(asteroid.x,asteroid.y))
 }
 
+function rotateSpaceship(angle) {
+  // get the current rotation of the spaceship
+  var currentRotation = spaceship.rotation
+
+  // calculate the new rotation by adding the angle
+  var newRotation = currentRotation + angle
+
+  // rotate the spaceship to the new rotation over 500 milliseconds
+  spaceship.rotate(newRotation, 500)
+}
+
 function shoot() {
   if (shooterHit) {
     startGame()
     return
   }
- 	shooter.aim(this.x,this.y)
+  
+ 	console.log(x,y)
+  shooter.aim(x,y)
+  const shooterRotation = Math.round(shooter.rotation)
   let laser = stamp('laser3',shooter.x+0, shooter.y+0, 40)
- 	laser.back().aim(this.x,this.y)
+  let sideLaserLeft = stamp('laser3',shooter.x-30, shooter.y+0, 30)
+  let sideLaserRight = stamp('laser3',shooter.x+30, shooter.y+0, 30)
+ 	laser.back().aim(x,y)
   lasers.push(laser)
+	if (triLaser) {
+    if (mirror) mirror.hide();
+    mirror = stamp(spaceship,x,y,100).hide();
+    mirror.aim(shooter.x,shooter.y);
+    const mirrorRotation = Math.round(mirror.rotation)
+    let mirrorLaserLeft = stamp('laser3',mirror.x-30, mirror.y+0, 30).hide()
+    let mirrorLaserRight = stamp('laser3',mirror.x+30, mirror.y+0, 30).hide()
+    const left = rotatePoint(shooter.x, shooter.y, sideLaserLeft.x, sideLaserLeft.y, shooterRotation);
+    const right = rotatePoint(shooter.x, shooter.y, sideLaserRight.x, sideLaserRight.y, shooterRotation);
+    const mirrorLeftCoords = rotatePoint(mirror.x, mirror.y, mirrorLaserLeft.x, mirrorLaserLeft.y, mirrorRotation);
+    const mirrorRightCoords = rotatePoint(mirror.x, mirror.y, mirrorLaserRight.x, mirrorLaserRight.y, mirrorRotation);
+
+    mirrorLaserLeft.move(mirrorLeftCoords.x,mirrorLeftCoords.y);
+    mirrorLaserRight.move(mirrorRightCoords.x,mirrorRightCoords.y);
+    sideLaserLeft.move(left.x,left.y).aim(mirrorLaserRight.x, mirrorLaserRight.y);
+    sideLaserRight.move(right.x,right.y).aim(mirrorLaserLeft.x, mirrorLaserLeft.y);
+
+    lasers.push(sideLaserRight)
+    lasers.push(sideLaserLeft)
+  }
+  
+
   sound('zap')
 }
 
 function loop() {
+  if (applause) return
   if (shooterHit) {
     level = 1
     tap = startGame
@@ -120,7 +189,8 @@ function loop() {
     	level = level + 1 
     }
     sound('claps');
-    tap = startGame
+    tap = startGame;
+    applause = true;
     return
   }
   lasers.forEach(laser => {
@@ -141,10 +211,10 @@ function loop() {
           showExplosion(asteroid)
         	return true 
         }
-        return false
+       return false
       })
-    ) {
-    }
+     ) {
+     }
     laser.move(UP, 20,5)
   })
   allAsteroids.forEach(asteroid => {
@@ -158,6 +228,3 @@ function loop() {
     asteroid.wrap()
   })
 }
-
-
-
