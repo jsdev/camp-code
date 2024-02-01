@@ -1,10 +1,10 @@
 // MinesweeperJS
-// TODO: swap out portal stamps for color coded numbers to make easier to play faster
 // TODO: seems to random timing bug
 
 var grid = [];
 var tapped = null;
 var gridSize = 15;
+var gridSizeY = 20;
 var gameCount = 0;
 var bombCount = 0;
 var gameOver = false;
@@ -12,7 +12,7 @@ var gameStatus;
 var portal = [
   'whitebox',
   '@mines1',
-  '@mines8',
+  '@mines2',
   '@mines3',
   '@mines4',
   '@mines5',
@@ -24,7 +24,7 @@ var portal = [
 function makeArray(){
   var array = [];
   var tileSize = 51.2;
-  for (var row = 0; row < gridSize; row++) {
+  for (var row = 0; row < gridSizeY; row++) {
     array[row] = [];
     for (var col = 0; col < gridSize; col++) {
       var s = stamp(
@@ -85,7 +85,7 @@ function revealTile(tile) {
 }
 
 function isValidCoordinate(y, x) {
-  return x >= 0 && x < gridSize && y >= 0 && y < gridSize
+  return x >= 0 && x < gridSize && y >= 0 && y < gridSizeY
 }
 
 function countAdjacentMines(y,x) {
@@ -113,9 +113,9 @@ function notBomb() {
 
 function tap() {
   if (!bombCount) {
-    bombCount = random(gridSize*4,gridSize*6);
+    bombCount = random(gridSizeY*2,gridSize*4);
 	  for (var i = 0; i < bombCount; i++) {
-      row = random(gridSize)-1;
+      row = random(gridSizeY)-1;
       col = random(gridSize)-1;
       if (grid[row][col].mine === true || (row === tapped.row && col === tapped.col)) {
         i--;
@@ -133,13 +133,14 @@ function tap() {
     delay(startGame,5000);
     return
   }
-  if (gridSize * gridSize - bombCount === gameCount) {
+  const discoverable = gridSize * gridSizeY - bombCount;
+  if (discoverable === gameCount) {
     gameStatus.change('YOU WIN!!!');
     sound('claps')
   	delay(startGame,5000);
     return
   }
-  if (gameCount+5 >= gridSize * gridSize - bombCount) {
+  if (gameCount+5 >= discoverable) {
     gameStatus.change('BE CAREFUL');
   }
 }
