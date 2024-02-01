@@ -2,7 +2,6 @@
 // TODO: swap out portal stamps for color coded numbers to make easier to play faster
 // TODO: seems to random timing bug
 
-// TODO replace portal
 var grid = [];
 var tapped = null;
 var gridSize = 15;
@@ -12,13 +11,16 @@ var gameOver = false;
 var gameStatus;
 var portal = [
   'whitebox',
-  'portal1',
-  'portal2',
-  'portal3',
-  'portal4',
-  'portal5',
-  'portal6',
+  '@mines1',
+  '@mines8',
+  '@mines3',
+  '@mines4',
+  '@mines5',
+  '@mines6',
+  '@mines7',
+  '@mines8'
 ];
+
 function makeArray(){
   var array = [];
   var tileSize = 51.2;
@@ -77,7 +79,8 @@ function revealTile(tile) {
       }
     }
   } else {
-    tile.size(90);
+    // if use portal assets
+    //tile.size(90);
   }
 }
 
@@ -110,7 +113,7 @@ function notBomb() {
 
 function tap() {
   if (!bombCount) {
-    bombCount = random(gridSize*2,gridSize*3);
+    bombCount = random(gridSize*4,gridSize*6);
 	  for (var i = 0; i < bombCount; i++) {
       row = random(gridSize)-1;
       col = random(gridSize)-1;
@@ -152,3 +155,4 @@ function startGame() {
 }
 
 startGame()
+
