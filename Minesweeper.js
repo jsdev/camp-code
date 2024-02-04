@@ -1,5 +1,4 @@
 // MinesweeperJS
-// TODO: seems to random timing bug
 
 var grid = [];
 var tapped = null;
@@ -130,7 +129,7 @@ function tap() {
   if (gameOver) {
   	gameStatus.change('YOU LOSE!!');
     sound('boo');
-    delay(startGame,5000);
+		delay(startGame,1000)
     return
   }
   const discoverable = gridSize * gridSizeY - bombCount;
@@ -140,14 +139,12 @@ function tap() {
   	delay(startGame,5000);
     return
   }
-  if (gameCount+5 >= discoverable) {
-    gameStatus.change('BE CAREFUL');
-  }
 }
 
 function startGame() {
   var x, y;
   reset();
+  gameOver = false;
   fill('white');
   gameStatus = text('', 375, 950, 100, 'black', CENTER);
   gameCount = 0;
@@ -156,4 +153,3 @@ function startGame() {
 }
 
 startGame()
-
