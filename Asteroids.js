@@ -17,8 +17,8 @@ let mirror = null;
 const levels = {
   1: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
   2: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
-	3: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
-	4: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
+  3: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()],
+  4: () => [spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(), spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid(),spawnBigAsteroid()]
 }
 
 function startGame() {
@@ -27,7 +27,6 @@ function startGame() {
   
   shooter = stamp(spaceship,100)
   lasers = []
-  triLaser = true
 
   bigAsteroids = levels[level]()
   mediumAsteroids = []
@@ -35,27 +34,10 @@ function startGame() {
   shooterHit = false
   tap = shoot
   applause = false
-}
-
-function rotateGuns(spaceship, leftWingGun, rightWingGun) {
-  var {x, y, rotation } = spaceship
-  // set the distance of the guns from the center of the spaceship
-  var distance = 30;
-  // set the initial position of the left wing gun
-  var leftX = x - distance;
-  var leftY = y;
-  // set the initial position of the right wing gun
-  var rightX = x + distance;
-  var rightY = y;
-  // use the rotatePoint function to get the new position of the guns after rotation
-  var left = rotatePoint(x, y, leftX, leftY, rotation);
-  var right = rotatePoint(x, y, rightX, rightY, rotation);
-  // set the x, y position of the left wing gun
-  leftWingGun.x = left.x;
-  leftWingGun.y = left.y;
-  // set the x, y position of the right wing gun
-  rightWingGun.x = right.x;
-  rightWingGun.y = right.y;
+  rightLaser = true
+  leftLaser = true
+  frontLaser = true
+  triLaser = true
 }
 
 function rotatePoint(cx, cy, x, y, angle) {
@@ -67,9 +49,6 @@ function rotatePoint(cx, cy, x, y, angle) {
     y: Math.round(sin * (x-cx) + cos * (y-cy) + cy)
   };
 } 
-
-
-startGame()
 
 function spawnBigAsteroid() {
   let x = random(0,750)
@@ -92,7 +71,7 @@ function spawnSmallAsteroid(x,y) {
   let newY = random([rand1,rand2])
 	
   asteroid = stamp(random(SMALL_ONES),x1, y1, 50);
-	asteroid.speed = 9
+  asteroid.speed = 9;
   asteroid.rotate(0,270).aim(newX,newY)
   return asteroid
 }
@@ -102,8 +81,8 @@ function spawnMediumAsteroid(x,y) {
   let y1 = x + random(-5,5)
 
   asteroid = stamp(random(BIG_ONES),x, y, 100);
-  asteroid.speed = 8
-  asteroid.rotate(165,190)
+  asteroid.speed = 8;
+  asteroid.rotate(165,190);
   return asteroid
 }
 
@@ -136,43 +115,67 @@ function rotateSpaceship(angle) {
   spaceship.rotate(newRotation, 500)
 }
 
+function loadFrontLaser() {
+  const laser = stamp('laser3',shooter.x+0, shooter.y+0, 40)
+ 	laser.back().aim(x,y)
+  lasers.push(laser)  
+}
+
+function loadSideLaser(n, shooterRotation, mirrorRotation) {
+  const sideLaser = stamp('laser3',shooter.x + n, shooter.y+0, 30)
+  const mirrorLaser = stamp('laser3',mirror.x + n, mirror.y+0, 30).hide()
+  const side = rotatePoint(shooter.x, shooter.y, sideLaser.x, sideLaser.y, shooterRotation);
+  const mirrorCoords = rotatePoint(mirror.x, mirror.y, mirrorLaser.x, mirrorLaser.y, mirrorRotation);
+  mirrorLaser.move(mirrorCoords.x,mirrorCoords.y);
+  sideLaser.move(side.x,side.y).aim(mirrorLaser.x, mirrorLaser.y);
+  lasers.push(sideLaser)
+}
+
+function loadSideLasers() {
+  if (mirror) mirror.hide();
+  mirror = stamp(spaceship,-1000,-1000,100).hide().move(x,y);
+  const shooterRotation = Math.round(shooter.rotation)
+  mirror.rotate(shooterRotation);
+  const mirrorRotation = Math.round(mirror.rotation)
+	if (leftLaser) loadSideLaser(-30, shooterRotation, mirrorRotation)
+	if (rightLaser) loadSideLaser(30, shooterRotation, mirrorRotation)
+	mirror.rotate(RIGHT, 180)
+}
+
 function shoot() {
   if (shooterHit) {
     startGame()
     return
   }
   
- 	console.log(x,y)
   shooter.aim(x,y)
-  const shooterRotation = Math.round(shooter.rotation)
-  let laser = stamp('laser3',shooter.x+0, shooter.y+0, 40)
-  let sideLaserLeft = stamp('laser3',shooter.x-30, shooter.y+0, 30)
-  let sideLaserRight = stamp('laser3',shooter.x+30, shooter.y+0, 30)
- 	laser.back().aim(x,y)
-  lasers.push(laser)
-	if (triLaser) {
-    if (mirror) mirror.hide();
-    mirror = stamp(spaceship,x,y,100).hide();
-    mirror.aim(shooter.x,shooter.y);
-    const mirrorRotation = Math.round(mirror.rotation)
-    let mirrorLaserLeft = stamp('laser3',mirror.x-30, mirror.y+0, 30).hide()
-    let mirrorLaserRight = stamp('laser3',mirror.x+30, mirror.y+0, 30).hide()
-    const left = rotatePoint(shooter.x, shooter.y, sideLaserLeft.x, sideLaserLeft.y, shooterRotation);
-    const right = rotatePoint(shooter.x, shooter.y, sideLaserRight.x, sideLaserRight.y, shooterRotation);
-    const mirrorLeftCoords = rotatePoint(mirror.x, mirror.y, mirrorLaserLeft.x, mirrorLaserLeft.y, mirrorRotation);
-    const mirrorRightCoords = rotatePoint(mirror.x, mirror.y, mirrorLaserRight.x, mirrorLaserRight.y, mirrorRotation);
-
-    mirrorLaserLeft.move(mirrorLeftCoords.x,mirrorLeftCoords.y);
-    mirrorLaserRight.move(mirrorRightCoords.x,mirrorRightCoords.y);
-    sideLaserLeft.move(left.x,left.y).aim(mirrorLaserRight.x, mirrorLaserRight.y);
-    sideLaserRight.move(right.x,right.y).aim(mirrorLaserLeft.x, mirrorLaserLeft.y);
-
-    lasers.push(sideLaserRight)
-    lasers.push(sideLaserLeft)
-  }
-  
-
+	if (triLaser) loadSideLasers()
+	if (frontLaser) loadFrontLaser()
   sound('zap')
+}
+
+function laserHit(allAsteroids) {
+  return function (laser) {
+    allAsteroids.some(asteroid => {
+      if (asteroid.hit===true) return
+      if (laser.hits(asteroid)) {
+        asteroid.hit=true;
+        laser.hide();
+        if(asteroid.width_ === 200) {
+          bigHit(asteroid);
+          return true;
+        }
+        if(asteroid.width_ === 100) {
+          mediumHit(asteroid);
+          return true;
+        }
+        showExplosion(asteroid);
+        return true;
+      }
+      return false;
+    });
+    laser.move(UP, 20,5);
+  }
 }
 
 function loop() {
@@ -193,30 +196,7 @@ function loop() {
     applause = true;
     return
   }
-  lasers.forEach(laser => {
-    if (
-      allAsteroids.some(asteroid => {
-        if (asteroid.hit===true) return
-        if (laser.hits(asteroid)) {
-          asteroid.hit===true
-          laser.hide()
-          if(asteroid.width_ === 200) {
-            bigHit(asteroid)
-            return true 
-          }
-          if(asteroid.width_ === 100) {
-            mediumHit(asteroid)
-            return true 
-          }
-          showExplosion(asteroid)
-        	return true 
-        }
-       return false
-      })
-     ) {
-     }
-    laser.move(UP, 20,5)
-  })
+  lasers.forEach(laserHit(allAsteroids))
   allAsteroids.forEach(asteroid => {
     if (asteroid.hit===true) return
     if (!shooterHit && asteroid.hits(shooter.x, shooter.y)) {
@@ -228,3 +208,5 @@ function loop() {
     asteroid.wrap()
   })
 }
+
+startGame()
