@@ -62,7 +62,8 @@ function createLake() {
 
 // Create highway
 function createHighway(){
-  box(0, 547, 767, 375, 'black')
+  highway1 = stamp('@highway', 190, 730, 380);
+  highway2 = stamp('@highway', 570, 730, 380).flip();
   // Add busses
   addStamps([{startX: -300, startY: 600, endX: 967, type: 'highway', width: 160, directionOfMovement: 'right', name: 'bus'}], 2, 5000)
   // Add trucks
@@ -182,8 +183,9 @@ function detectHighwayCollisions() {
   for (i = 0; i < highwayObjects.length; i++) {
     halfWidth = 0.5 * highwayObjects[i].stamp.width_
     if (distance(frogger.stamp, highwayObjects[i].stamp) < halfWidth) {
-      highwayObjects[i].stamp.front();
-    	frogger.stamp.change('pepperoni');
+    	frogger.stamp.back().size(50).move(DOWN, 20).change('pepperoni');
+      highway1.back();
+      highway2.back();
       theEnd('lose');
       return
     }
