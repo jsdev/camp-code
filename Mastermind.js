@@ -1,14 +1,19 @@
 // MasterMind
-// ToDo Count Guesses, and declare game over
 const colors = ["ghost4", "ghost5", "ghost6", "ghost7", "ghost8", "ghost9"];
 const floating = ["ghost10", "ghost11", "ghost12", "ghost13", "ghost14", "ghost16"];
 
-let tapped = null
-
 function placePeg() {
   if (!tapped) return;
-  this.change(tapped.name)
+  this.change(tapped.name).size(80)
   this.i = tapped.i
+}
+
+function drawTitle() {
+  reset();
+  fill('parchment');
+  stamp('@megamindlogo',260,105,160);
+	text("MASTER", 425,100,42, '#342214', 'Saira Stencil One', CENTER);
+  text("MIND", 425,160, 69, '#342214', 'Saira Stencil One', CENTER);
 }
 
 function areHolesAllFilled(holes) {
@@ -27,7 +32,7 @@ function selectPeg() {
 function drawPegs() {
   let pegs = []
   for (let i = 0; i < 6; i++) {
-    pegs.push(stamp(colors[i], 700, 350 + i * 110, 100));
+    pegs.push(stamp(colors[i], 700, 350 + i * 100, 100));
     pegs[i].i = i;
     pegs[i].tap = selectPeg;
   }
@@ -37,10 +42,10 @@ function drawPegs() {
 function drawHoles() {
   let holes = [];
   for (let i = 0; i < 4; i++) {
-    holes.push(stamp('black', 225 + i * 90, 260, 70));
+    holes.push(stamp('black', 225 + i * 90, 240, 40));
     holes[i].tap = placePeg;
   }
-  submit = stamp('magnifyingglass', 600, 250,60).tap = guessSubmitted
+  submit = stamp('@magnify', 600, 250,100).rotate(-45).tap = guessSubmitted
   return holes;
 }
 
@@ -110,31 +115,23 @@ function drawGuess(guesses, n) {
 }
 
 function updateGame() {
-  reset()
-  fill('parchment')
-  text("Mastermind", 376,100,80, CENTER);
-  text("Fill holes with colors", 376, 160, CENTER);
+  drawTitle();
   holes = drawHoles();
   pegs = drawPegs(); 
   guesses.forEach(drawGuess)
 }
 
 function startGame() {
-  reset()
-  fill('parchment')
-  guesses = []
-  text("Mastermind", 376,100,80, CENTER);
-  text("Fill holes with colors", 376, 160, CENTER);
+  tapped = null;
+  tap = null;
+  guesses = [];
+	drawTitle();
 	secretCode = [
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length)
   ]
-    // Initialize other variables
-  guessesRemaining = 10;
-  currentRow = 0;
-  guess = [];
   feedback = [];
   holes = drawHoles();
   pegs = drawPegs();
@@ -145,26 +142,32 @@ function startGame() {
 function guessSubmitted() {
   if (!areHolesAllFilled(holes)) return false
   guesses.push(holes.map(hole => hole.i));
-  feedback.push(getFeedback(secretCode, guesses[guesses.length-1]))
+  let feed = getFeedback(secretCode, guesses[guesses.length-1]);
+  feedback.push(feed)
   updateGame()
+  if (feed.match === 4) return gameWinner();
+  if (feedback.length === 8) return gameLoser();
+}
+
+function gameOver() {
+  reset();
+  fill('black');
+  delay(
+    () => tap = startGame,
+    3000
+  );
 }
 
 function gameWinner() {
-  // Display win message and option to restart
-  text("You win!", 50, 20);
-  let s = stamp("start2", 80, 40);
-  s.tap = startGame()
+  gameOver();
+  stamp('@megamindcaught', 382,450, 900);
+  text("You caught me! This time...", 382, 980, 50, 'white', CENTER);
 }
 
 function gameLoser(){
-  // Display lose message, reveal code, and option to restart
-  text("You lose!", 50, 20);
-  text("Secret code:", 30, 40);
-  for (let i = 0; i < secretCode.length; i++) {
-    stamp(secretCode[i], 60 + i * 30, 60);
-  }
-  let s = stamp("start2", 80, 40);
-  s.tap = startGame()
+  gameOver();
+  stamp('@megamind', 410,450, 900)
+  text("Nice Try! Outsmarted...", 382, 980, 50, 'white', CENTER);
 }
 
 startGame()
