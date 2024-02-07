@@ -35,7 +35,6 @@ function instruct(){
 
 function selectPeg() {
   if (tapped) {
-    console.log(tapped);
     tapped.change(colors[tapped.i]);
   }
   tapped = this;
@@ -114,7 +113,6 @@ function getFeedback(secretcode, guesses) {
     }
   }
 
-  // Return the feedback object
   return feedback;
 }
 
@@ -123,7 +121,6 @@ function drawGuess(guesses, n) {
   for (let i = 0; i < 4; i++) {
     stamp(colors[guess[i]], 225 + i * 90, 290 + (n+1) *80, 75);
   }
-  console.log(feedback);
   drawFeedback(n); 
 }
 
