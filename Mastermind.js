@@ -24,17 +24,24 @@ function instruct(){
   drawTitle();
   stamp('arrow11',700,105,80).tap = () => delay(updateGame, 10);
   stamp('black', 100, 290, 40)
-  text("fill each with a colored ghost", 140, 300, 40, '#342214', LEFT);
+  text("fill each with a colored ghost", 140, 300, 48, '#342214', LEFT);
   stamp('@magnify', 115, 400, 0).rotate(-45).size(100);
-  text("to discover feedback", 140, 400, 40, '#342214', LEFT);
-  circle(105, 485, 14, 'green', 'black');
-  text("color and placement match", 140, 500, 40, '#342214', LEFT);
-  circle(105, 585, 16, 'yellow', 'black');
-  text("color match only", 140, 600, 40, '#342214', LEFT);
+  text(" discover feedback", 140, 400, 48, '#342214', LEFT);
+  circle(105, 485, 8, 'green', 'black');
+  text("color and placement match", 140, 500, 48, '#342214', LEFT);
+  circle(105, 585, 8, 'yellow', 'black');
+  text("color match only", 140, 600, 48, '#342214', LEFT);
+  text("limited number of queries", 140, 700, 48, '#342214', LEFT);
+  circle(90, 772, 8, 'green', 'black');
+  circle(114, 772, 8, 'green', 'black');
+  circle(90, 796, 8, 'green', 'black');
+  circle(114, 796, 8, 'green', 'black');
+  text("catches Mastermind", 140, 800, 48, '#342214', LEFT);
 }
 
 function selectPeg() {
   if (tapped) {
+    console.log(tapped);
     tapped.change(colors[tapped.i]);
   }
   tapped = this;
@@ -63,8 +70,8 @@ function drawHoles() {
 
 function drawFeedback(n) {
   let color, feed = { ...feedback[n] };
-  for (let i = 0; i < 2; i++) {
-    for (let j = 0; j < 2; j++) {
+  for (let j = 0; j < 2; j++) {
+    for (let i = 0; i < 2; i++) {
       color = "clear";
       if (feed.match > 0) {
         color = 'green';
@@ -113,6 +120,7 @@ function getFeedback(secretcode, guesses) {
     }
   }
 
+  // Return the feedback object
   return feedback;
 }
 
@@ -121,6 +129,7 @@ function drawGuess(guesses, n) {
   for (let i = 0; i < 4; i++) {
     stamp(colors[guess[i]], 225 + i * 90, 290 + (n+1) *80, 75);
   }
+  console.log(feedback);
   drawFeedback(n); 
 }
 
