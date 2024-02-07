@@ -20,6 +20,19 @@ function areHolesAllFilled(holes) {
   return holes.every(hole => hole.i !== undefined)
 }
 
+function instruct(){
+	drawTitle();
+	stamp('arrow11',700,105,80).tap = () => delay(updateGame, 10);
+	stamp('black', 100, 290, 40)
+  text("fill each with a colored ghost", 140, 300, 40, '#342214', LEFT);
+  stamp('@magnify', 115, 400, 0).rotate(-45).size(100);
+  text("to discover feedback", 140, 400, 40, '#342214', LEFT);
+  circle(105, 485, 14, 'green', 'black');
+  text("color and placement match", 140, 500, 40, '#342214', LEFT);
+  circle(105, 585, 16, 'yellow', 'black');
+	text("color match only", 140, 600, 40, '#342214', LEFT);
+}
+
 function selectPeg() {
   if (tapped) {
     console.log(tapped);
@@ -45,7 +58,7 @@ function drawHoles() {
     holes.push(stamp('black', 225 + i * 90, 240, 40));
     holes[i].tap = placePeg;
   }
-  submit = stamp('@magnify', 600, 250,100).rotate(-45).tap = guessSubmitted
+  submit = stamp('@magnify', 600, 250,0).rotate(-45).size(100).tap = guessSubmitted
   return holes;
 }
 
@@ -116,6 +129,8 @@ function drawGuess(guesses, n) {
 
 function updateGame() {
   drawTitle();
+  stamp('question',700,105,80).tap = () => delay(instruct, 10);
+
   holes = drawHoles();
   pegs = drawPegs(); 
   guesses.forEach(drawGuess)
@@ -126,6 +141,8 @@ function startGame() {
   tap = null;
   guesses = [];
 	drawTitle();
+  stamp('question',700,105,80).tap = () => delay(instruct, 10);
+
 	secretCode = [
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length),
@@ -159,13 +176,13 @@ function gameOver() {
 }
 
 function gameWinner() {
-  gameOver();
+	gameOver();
   stamp('@megamindcaught', 382,450, 900);
   text("You caught me! This time...", 382, 980, 50, 'white', CENTER);
 }
 
 function gameLoser(){
-  gameOver();
+	gameOver();
   stamp('@megamind', 410,450, 900)
   text("Nice Try! Outsmarted...", 382, 980, 50, 'white', CENTER);
 }
