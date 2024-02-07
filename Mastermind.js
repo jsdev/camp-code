@@ -12,7 +12,7 @@ function drawTitle() {
   reset();
   fill('parchment');
   stamp('@megamindlogo',260,105,160);
-	text("MASTER", 425,100,42, '#342214', 'Saira Stencil One', CENTER);
+  text("MASTER", 425,100,42, '#342214', 'Saira Stencil One', CENTER);
   text("MIND", 425,160, 69, '#342214', 'Saira Stencil One', CENTER);
 }
 
@@ -21,16 +21,16 @@ function areHolesAllFilled(holes) {
 }
 
 function instruct(){
-	drawTitle();
-	stamp('arrow11',700,105,80).tap = () => delay(updateGame, 10);
-	stamp('black', 100, 290, 40)
+  drawTitle();
+  stamp('arrow11',700,105,80).tap = () => delay(updateGame, 10);
+  stamp('black', 100, 290, 40)
   text("fill each with a colored ghost", 140, 300, 40, '#342214', LEFT);
   stamp('@magnify', 115, 400, 0).rotate(-45).size(100);
   text("to discover feedback", 140, 400, 40, '#342214', LEFT);
   circle(105, 485, 14, 'green', 'black');
   text("color and placement match", 140, 500, 40, '#342214', LEFT);
   circle(105, 585, 16, 'yellow', 'black');
-	text("color match only", 140, 600, 40, '#342214', LEFT);
+  text("color match only", 140, 600, 40, '#342214', LEFT);
 }
 
 function selectPeg() {
@@ -140,10 +140,10 @@ function startGame() {
   tapped = null;
   tap = null;
   guesses = [];
-	drawTitle();
+  drawTitle();
   stamp('question',700,105,80).tap = () => delay(instruct, 10);
 
-	secretCode = [
+  secretCode = [
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length),
     Math.floor(Math.random() * colors.length),
@@ -176,13 +176,13 @@ function gameOver() {
 }
 
 function gameWinner() {
-	gameOver();
+  gameOver();
   stamp('@megamindcaught', 382,450, 900);
   text("You caught me! This time...", 382, 980, 50, 'white', CENTER);
 }
 
 function gameLoser(){
-	gameOver();
+  gameOver();
   stamp('@megamind', 410,450, 900)
   text("Nice Try! Outsmarted...", 382, 980, 50, 'white', CENTER);
 }
