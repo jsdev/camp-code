@@ -1,0 +1,224 @@
+// FROGGER
+// TODO CONTINUE TO UPDATE GRAPHICS
+// TODO ALLOW FROG To jump different ways
+const froggers = ['@frogger','@frogger2','@frogger3', '@frogger4', '@frogger5', '@frogger6']
+const safeFrogs = ['@lilypadon','@frogger4diagnol','@frogger5diagnol']
+
+function startGame() {
+  reset()
+  highwayObjects = [];
+  lakeObjects = [];
+  lilyPadObjects = [];
+  lilyPadsOccupied = 0;
+  createLake();
+  createLilyPads();
+  createBeams();
+  createHighway();
+  inPlay = true;
+  frogger = Object.create({
+    stamp: stamp(random(froggers), 386, 925, 90)
+  });
+  tap = hop
+  loop = detectCollision
+}
+                  
+function hop() {
+  frogger.stamp.move(frogger.stamp.x, frogger.stamp.y - 90) 
+}
+
+// Create beam
+function createBeams(){
+  	box(0, 445, 767, 100, 'lightgreen')
+  	box(0, 922, 767, 100, 'lightgreen')
+}
+                  
+// Create lily pads
+function createLilyPads() {
+  let x = 85;
+  const	y = 75;
+  repeat(function() {
+    lilyPadObjects.push({
+      stamp: stamp('@lilypadempty', x, y, 100)
+    })
+    x = x + 150
+  }, 5)
+}
+
+// Create lake
+function createLake() {
+  fill('pool')
+  // Add highest row of logs
+  addStamps([{startX: -100, startY: 170, endX: 867, type: 'lake', width: 175, directionOfMovement: 'right', name: 'alligator2'}], 3, 2200)                  
+  // Add lowest row of logs
+  addStamps([{startX: -100, startY: 320, endX: 867, type: 'lake', width: 150, directionOfMovement: 'right', name: 'alligator2'}], 3, 2200)
+  // Add highest row of turtles
+  addStamps([
+    {startX: 977, startY: 240, endX: -200, type: 'lake', width: 100, directionOfMovement: 'left', name: '@driftwood'},
+    {startX: 1087, startY: 240, endX: -100, type: 'lake', width: 100, directionOfMovement: 'left', name:'@driftwood'}
+  ], 3, 2150)
+  // Add lowest row of turtles
+  addStamps([
+    {startX: 977, startY: 390, endX: -200, type: 'lake', width: 100, directionOfMovement: 'left', name: 'seaturtle2'},
+    {startX: 1087, startY: 390, endX: -100, type: 'lake', width: 100, directionOfMovement: 'left', name: 'seaturtle2'}
+  ], 3, 2150)
+}
+
+// Create highway
+function createHighway(){
+  highway1 = stamp('@highway', 190, 730, 380);
+  highway2 = stamp('@highway', 570, 730, 380).flip();
+  // Add busses
+  addStamps([{startX: -300, startY: 600, endX: 967, type: 'highway', width: 160, directionOfMovement: 'right', name: 'bus'}], 2, 5000)
+  // Add trucks
+  addStamps([{startX: 876, startY: 685, endX: -100, type: 'highway', width: 100, directionOfMovement: 'left', name: 'truck' }], 3, 3000)
+  // Add busses
+  addStamps([{startX: -300, startY: 770, endX: 967, type: 'highway', width: 150, directionOfMovement: 'right', name: 'bus'}], 2, 5000)
+  // Add trucks
+  addStamps([{startX: 876, startY: 855, endX: -100, type: 'highway', width: 100, directionOfMovement: 'left', name: 'truck' }], 3, 3000)  
+}
+
+
+function addStamps(details, numberOfSets, stagger) {
+  index = 0
+  repeat(function() {
+    details.forEach(function(obj) {
+      	// Create a copy of the object and its stamp
+      	// based on details given
+    	obj = Object.create(obj)
+      	obj['stamp'] = stamp(obj.name, obj.startX, obj.startY, obj.width)
+    		if (obj.name === 'alligator2') {
+          obj['stamp'].rotate(-18) 
+        }
+        addToTrackers(obj)
+    	
+        // Add motion at staggered times 
+      	determineStartTime(obj, stagger, index)
+    })
+    
+    index = index + 1
+  }, numberOfSets)
+}
+
+// Keep track of whether the object is highway or lake
+function addToTrackers(obj) {
+    if (obj.type === 'highway') {
+      highwayObjects.push(obj)
+      return
+    }
+  lakeObjects.push(obj)
+}
+
+// This allows us to create a number of
+// object groups from the same set of details
+// (e.g. turtle pair starts at 0ms, another pair at 1500ms)
+function determineStartTime(obj, stagger, index) {
+  waitTime = stagger * index
+  
+  setTimeout(function() {
+    addMotion(obj)
+  }, waitTime)
+}
+
+function addMotion(obj){ 
+  	obj.stamp.move(obj.endX, obj.startY, 8000)
+    checkOffscreen(obj)
+}
+
+// Check if the object is out of viewport every 1000ms
+function checkOffscreen(obj) {
+  setInterval(function(){
+    isOffscreen(obj)
+  }, 100)
+};
+
+// Check if the object is offscreen using current x, y coords
+function isOffscreen(obj) {  
+  if (obj.stamp.name === '@frogger' && (obj.stamp.x < -50 || obj.stamp.x > 817)) {
+    theEnd('lose')
+    frogger.stamp.hide()
+    return true
+  }
+  
+  if (obj.stamp.x === obj.endX) {
+  	moveToBeginning(obj)
+  }
+}
+
+// Move the object to its starting coords
+function moveToBeginning(obj) {
+  obj.stamp.move(obj.startX, obj.startY)
+  obj.stamp.move(obj.endX, obj.startY, 8000)
+}
+
+function detectOnLilyPad() {
+  for (i = 0; i < lilyPadObjects.length; i++) {
+    if (lilyPadObjects[i].stamp.name === '@lilypadempty' && distance(frogger.stamp, lilyPadObjects[i].stamp) < 50) {
+      lilyPadObjects[i].stamp.change('@lilypadon');
+      stamp(random(safeFrogs),lilyPadObjects[i].stamp.x, lilyPadObjects[i].stamp.y, 100);
+      lilyPadsOccupied++;
+      frogger.stamp.hide().change(random(froggers)).move(386, 925).show();
+      if (lilyPadsOccupied === 5) {
+        theEnd('win')
+      }
+      return;
+    }
+  }
+  madeSplash();
+}
+
+function detectFallingIntoWater() {
+  inWater = true
+  for (i = 0; i < lakeObjects.length; i++) {
+    halfWidth = 0.5 * lakeObjects[i].stamp.width_
+    if (distance(frogger.stamp, lakeObjects[i].stamp) < 50) {
+		inWater = false
+    	frogger.stamp.move(lakeObjects[i].stamp.x, lakeObjects[i].stamp.y)
+        frogger.stamp.front()
+    }
+  }
+  
+  if (inWater) {
+		madeSplash();
+  }
+}
+
+function detectHighwayCollisions() {
+  for (i = 0; i < highwayObjects.length; i++) {
+    halfWidth = 0.5 * highwayObjects[i].stamp.width_
+    if (distance(frogger.stamp, highwayObjects[i].stamp) < halfWidth) {
+    	frogger.stamp.back().size(50).move(DOWN, 20).change('pepperoni');
+      highway1.back();
+      highway2.back();
+      theEnd('lose');
+      return
+    }
+  }
+}
+
+function madeSplash() {
+  sound('splash');
+  frogger.stamp.splash();
+  theEnd('lose')
+}
+
+function theEnd(status) {
+  if (status === 'win') {
+    text('YOU WIN!!!', 50, 540, 'blue', 120)
+  } else {
+    text('GAME OVER', 50, 540, 'red', 120)
+  }
+  tap = startGame
+  loop = null
+}
+
+function detectCollision(){
+  if (!isOffscreen(frogger)) {
+    if (frogger.stamp.y < 130) return detectOnLilyPad();
+    if (frogger.stamp.y < 440 && frogger.stamp.y >= 130) detectFallingIntoWater();
+    if (frogger.stamp.y > 440 && frogger.stamp.y < 922) detectHighwayCollisions();
+  }
+}
+
+startGame()
+
+
